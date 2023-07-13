@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer } from "react";
 import axios from "axios";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Product from "../components/Product";
+import LoadingBox from "../components/LoadingBox";
+import MessageBox from "../components/MessageBox";
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -22,7 +23,7 @@ function HomeScreen() {
   const [{ products, loading, error }, dispatch] = useReducer(reducer, {
     products: [],
     loading: true,
-    error: [],
+    error: "",
   });
   useEffect(() => {
     const fetchData = async () => {
@@ -42,7 +43,9 @@ function HomeScreen() {
       <h1>Featured Products</h1>
       <div className='products'>
         {loading ? (
-          <div>Loading...</div>
+          <LoadingBox>Loading...</LoadingBox>
+        ) : error ? (
+          <MessageBox variant='danger'>{error}</MessageBox>
         ) : (
           <Row>
             {products.map((product) => {

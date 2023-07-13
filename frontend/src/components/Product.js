@@ -2,9 +2,12 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { Link } from "react-router-dom";
 import Rating from "./Rating";
+import Store from "../Store";
+import { useContext } from "react";
 
 function Product(props) {
   const { product } = props;
+
   return (
     <Card>
       <Link to={`/product/${product.slug}`}>

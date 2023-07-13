@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useContext } from "react";
 import axios from "axios";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -7,6 +7,11 @@ import ListGroup from "react-bootstrap/ListGroup";
 import Rating from "../components/Rating";
 import Card from "react-bootstrap/Card";
 import Badge from "react-bootstrap/Badge";
+import Button from "react-bootstrap/esm/Button";
+import LoadingBox from "../components/LoadingBox";
+import MessageBox from "../components/MessageBox";
+import getError from "../util";
+import { Store } from "../Store";
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -27,7 +32,7 @@ function ProductScreen() {
   const [{ product, loading, error }, dispatch] = useReducer(reducer, {
     product: [],
     loading: true,
-    error: [],
+    error: "",
   });
   useEffect(() => {
     const fetchData = async () => {
@@ -36,13 +41,33 @@ function ProductScreen() {
         const result = await axios.get(`/api/products/slug/${slug}`);
         dispatch({ type: "FETCH_SUCCESS", payload: result.data });
       } catch (err) {
-        dispatch({ type: "FETCH_FAILURE", payload: err.message });
+        dispatch({ type: "FETCH_FAILURE", payload: getError(err.message) });
       }
     };
     fetchData();
   }, [slug]);
+
+  const { state, dispatch: ctxDispatch } = useContext(Store);
+  const { cart } = state;
+
+  const addtoCartHandler = async () => {
+    const existItem = cart.cartItems.find((x) => x._id === product._id);
+    const quantity = existItem ? existItem.quantity + 1 : 1;
+    const { data } = await axios.get(`/api/products/${product._id}`);
+    if (data.countInStock < quantity) {
+      window.alert("Product is out of Stock");
+      return;
+    }
+    ctxDispatch({
+      type: "CART_ADD_ITEM",
+      payload: { ...product, quantity },
+    });
+  };
+
   return loading ? (
-    <div>Loading...</div>
+    <LoadingBox>Loading...</LoadingBox>
+  ) : error ? (
+    <MessageBox>{error}</MessageBox>
   ) : (
     <div>
       <Row>
@@ -84,6 +109,11 @@ function ProductScreen() {
                     </Col>
                   </Row>
                 </ListGroup.Item>
+                {product.countInStock > 0 && (
+                  <div className='d-grid'>
+                    <Button onClick={addtoCartHandler}>Add to Cart</Button>
+                  </div>
+                )}
               </ListGroup>
             </Card.Body>
           </Card>
