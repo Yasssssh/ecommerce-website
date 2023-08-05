@@ -27,6 +27,19 @@ orderRouter.post(
 );
 
 orderRouter.get(
+  "/mine",
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const foundOrder = await Order.find({ user: req.user._id });
+    if (foundOrder) {
+      res.send(foundOrder);
+    } else {
+      res.status(404).send({ message: "Order Not Found" });
+    }
+  })
+);
+
+orderRouter.get(
   "/:id",
   isAuth,
   expressAsyncHandler(async (req, res) => {
@@ -35,6 +48,28 @@ orderRouter.get(
       res.send(foundOrder);
     } else {
       res.status(404).send({ message: "Order Not Found" });
+    }
+  })
+);
+
+orderRouter.put(
+  "/:id/pay",
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const foundorder = await Order.findById(req.params.id);
+    if (foundorder) {
+      foundorder.isPaid = true;
+      foundorder.paidAt = Date.now();
+      foundorder.paymentResult = {
+        id: req.body.id,
+        status: req.body.status,
+        update_time: req.body.update_time,
+        email_address: req.body.email_address,
+      };
+      const updatedOrder = await foundorder.save();
+      res.send({ message: "Paid", order: updatedOrder });
+    } else {
+      res.status(404).send({ message: "Order not found" });
     }
   })
 );
